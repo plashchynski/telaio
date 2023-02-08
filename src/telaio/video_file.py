@@ -3,7 +3,7 @@ import ffmpeg
 import av
 import cv2
 
-class Telaio:
+class VideoFile:
     def __init__(self, file_path):
         self.file_path = file_path
         self.probe = ffmpeg.probe(file_path)
