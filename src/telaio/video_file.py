@@ -39,7 +39,8 @@ class VideoFile:
     # for (frame_index, frame) in Telaio('video.mp4').frames():
     #     print(frame)
     # The limit parameter can be used to limit the number of frames returned
-    def frames(self, limit=None):
+    # The batch_size parameter can be used to return a batch of frames at a time
+    def frames(self, batch_size = None, limit=None):
         v = av.open(self.file_path)
         for frame_index, frame in enumerate(v.decode(video=0)):
             if limit and frame_index > limit:
@@ -48,7 +49,23 @@ class VideoFile:
             frame = np.asarray(frame.to_image())
             if abs(self.rotate) == 90:
                 frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
-            yield (frame_index, frame)
+
+            if batch_size:
+                if frame_index % batch_size == 0:
+                    # Start a new batch
+                    batch = [frame]
+                    frame_indexes = [frame_index]
+                else:
+                    batch.append(frame)
+                    frame_indexes.append(frame_index)
+                    if frame_index % batch_size == batch_size - 1:
+                        yield (frame_indexes, batch)
+            else:
+                yield (frame_index, frame)
+
+        # Return the last batch
+        if batch_size and len(batch) > 0:
+            yield (frame_indexes, batch)
 
     # Returns the first frame of the video
     def first_frame(self):
